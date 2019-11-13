@@ -15,6 +15,9 @@ int main(void)
     refresh();
     noecho();
     curs_set(0);
+    start_color();
+
+    init_pair(1, COLOR_RED, COLOR_BLACK);
 
     int maxx,maxy;
     getmaxyx(stdscr,maxy,maxx);
@@ -76,11 +79,15 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
 {
     int counter = 0;
     DIR *d;
+    char name[95];
     struct dirent *dir;
     d = opendir(directory);
     if (d) {
         for (int i = 0;(dir = readdir(d)) != NULL; i++) {
-            strncpy(files[i], dir->d_name, sizeof(files[0]));
+            strncpy(name, dir->d_name, sizeof(name));
+            if (dir->d_type == 4)
+                strcat(name, "/"); 
+            strncpy(files[i], name, sizeof(files[0]));
             counter++;
         }
         closedir(d);
