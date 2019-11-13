@@ -5,39 +5,61 @@
 
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
+void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter);
 
 int main(void)
 {
-    WINDOW *mainwindow, *titlebar;
+    WINDOW *mainwindow, *titlebar, *container;
 
     initscr();
     refresh();
+    noecho();
+    curs_set(0);
 
     int maxx,maxy;
     getmaxyx(stdscr,maxy,maxx);
 
-    if ( (mainwindow = newwin(maxy-1,maxx,1,0)) == NULL )
-        bomb("unable to allocate memory for mainwindow window");
+    if ( (container = newwin(maxy-1,maxx,1,0)) == NULL )
+        bomb("unable to allocate memory for container window");
     if ( (titlebar = newwin(1, maxx,0,0)) == NULL )
         bomb("Unable to allocate memory for titlebar window");
+    if ( (mainwindow = subwin(container,maxy-3,maxx-2,2,1)) == NULL )
+        bomb("Unable to allocate memory for subwindow");
 
     char *titlemsg = "ncfil - Ncurses File Manager - version 0.1";
     mvwaddstr(titlebar, 0, (maxx - strlen(titlemsg)) / 2, titlemsg);
     wrefresh(titlebar);
 
-    box(mainwindow,0,0);
+    box(container,0,0);
+    wrefresh(container);
 
     const size_t N = 100;
     const size_t M = 100;
     char files[N][M];
+
     int counter = get_files_in_directory(N, M, files, ".");
-    for (int i = 0; i < counter; i++) {
-        mvwaddstr(mainwindow,2+i,2,files[i]);
-    }
-    
+    int menuitem = 0;
+    drawmenu(mainwindow, menuitem, N, M, files, counter);
     wrefresh(mainwindow);
 
-    getch();
+    int key;
+
+    do {
+        key = getch();
+        switch(key) {
+        case 'j':
+            menuitem++;
+            if (menuitem > counter-1) menuitem = 0;
+            break;
+        case 'k':
+            menuitem--;
+            if (menuitem < 0) menuitem = counter-1;
+            break;
+        default:
+            break;
+        }
+        drawmenu(mainwindow, menuitem, N, M, files, counter);
+    } while (key != 'q');
 
     endwin();
     return 0;
@@ -64,4 +86,16 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
         closedir(d);
     }
     return counter;
+}
+
+void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter)
+{
+    wclear(win);
+    for (int i = 0; i < counter; i++) {
+        if (i == item)
+            wattron(win, A_REVERSE);
+        mvwaddstr(win,1+i,2,files[i]);
+        wattroff(win, A_REVERSE);
+    }
+    wrefresh(win);
 }
