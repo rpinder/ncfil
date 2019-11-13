@@ -52,11 +52,11 @@ int main(void)
         switch(key) {
         case 'j':
             menuitem++;
-            if (menuitem > counter-1) menuitem = 0;
+            if (menuitem > counter-1) menuitem = counter-1;
             break;
         case 'k':
             menuitem--;
-            if (menuitem < 0) menuitem = counter-1;
+            if (menuitem < 0) menuitem = 0;
             break;
         default:
             break;
