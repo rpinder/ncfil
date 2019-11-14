@@ -121,9 +121,6 @@ void loop(WINDOW *win, char file[], char dir[]) {
             menuitem--;
             if (menuitem < 0) menuitem = 0;
             break;
-        case '\n':
-
-            break;
         default:
             break;
         }
