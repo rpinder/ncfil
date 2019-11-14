@@ -32,7 +32,7 @@ int main(void)
 
     scrollok(mainwindow, 1);
 
-    char *titlemsg = "ncfil - Ncurses File Browser - version 0.1";
+    char *titlemsg = "ncfil - Ncurses File Browser";
     mvwaddstr(titlebar, 0, (maxx - strlen(titlemsg)) / 2, titlemsg);
     wrefresh(titlebar);
 
