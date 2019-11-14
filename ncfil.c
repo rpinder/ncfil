@@ -5,8 +5,8 @@
 
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
-void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter);
-void loop(WINDOW *win, char file[], char dir[]);
+void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
+void loop(WINDOW *win, char file[], char dir[], int *rowoffset);
 
 int main(void)
 {
@@ -39,16 +39,18 @@ int main(void)
     box(container,0,0);
     wrefresh(container);
 
+    int rowoffset = 0;
+
     char file[95];
     char dir[1000] = "./";
-    loop(mainwindow, file, dir);
+    loop(mainwindow, file, dir, &rowoffset);
 
     while (1) {
         int i;
         for (i = 1; file[i] != '\0'; i++);
         if (file[i-1] == '/') {
             strcat(dir, file);
-            loop(mainwindow, file, dir);
+            loop(mainwindow, file, dir, &rowoffset);
         } else {
             break;
         }
@@ -74,7 +76,7 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
     struct dirent *dir;
     d = opendir(directory);
     if (d) {
-        for (int i = 0;(dir = readdir(d)) != NULL; i++) {
+        for (int i = 0;((dir = readdir(d)) != NULL) && i < N; i++) {
             strncpy(name, dir->d_name, sizeof(name));
             if (dir->d_type == 4)
                 strcat(name, "/"); 
@@ -86,26 +88,35 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
     return counter;
 }
 
-void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter)
+void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
 {
+    // temporary until scrolling is implemented
+    int maxx, maxy;
+    getmaxyx(win,maxy,maxx);
+
     wclear(win);
-    for (int i = 0; i < counter; i++) {
+    for (int i = 0; (i < counter && i < maxy); i++) {
         if (i == item)
             wattron(win, A_REVERSE);
-        mvwaddstr(win,1+i,2,files[i]);
+        if (i + rowoffset < N)
+            mvwaddstr(win,1+i,2,files[i + rowoffset]);
         wattroff(win, A_REVERSE);
     }
     wrefresh(win);
 }
 
-void loop(WINDOW *win, char file[], char dir[]) {
-    const size_t N = 100;
+void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
+{
+    const size_t N = 1000;
     const size_t M = 100;
     char files[N][M];
 
+    int maxx, maxy;
+    getmaxyx(win, maxy, maxx);
+
     int counter = get_files_in_directory(N, M, files, dir);
     int menuitem = 0;
-    drawmenu(win, menuitem, N, M, files, counter);
+    drawmenu(win, menuitem, N, M, files, counter, *rowoffset);
     wrefresh(win);
 
     int key;
@@ -115,18 +126,26 @@ void loop(WINDOW *win, char file[], char dir[]) {
         switch(key) {
         case 'j':
             menuitem++;
-            if (menuitem > counter-1) menuitem = counter-1;
+            if (menuitem > maxy - 2 || menuitem > counter-1) {
+                menuitem = maxy > (counter-1) ? (counter-1) : maxy-2;
+                if (menuitem == maxy-2 && (menuitem+*rowoffset) < (counter - 1) )
+                    (*rowoffset)++;
+            }
             break;
         case 'k':
             menuitem--;
-            if (menuitem < 0) menuitem = 0;
+            if (menuitem < 0) {
+                menuitem = 0;   
+                if (*rowoffset > 0)
+                    (*rowoffset)--;
+            }
             break;
         default:
             break;
         }
-        drawmenu(win, menuitem, N, M, files, counter);
+        drawmenu(win, menuitem, N, M, files, counter, *rowoffset);
     } while (!(key == 'q' || key == '\n'));
 
-    strcpy(file, files[menuitem]);
+    strcpy(file, files[menuitem + *rowoffset]);
 }
 
