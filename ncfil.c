@@ -6,6 +6,7 @@
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
 void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter);
+void loop(WINDOW *win, char file[], char dir[]);
 
 int main(void)
 {
@@ -29,6 +30,8 @@ int main(void)
     if ( (mainwindow = subwin(container,maxy-3,maxx-2,2,1)) == NULL )
         bomb("Unable to allocate memory for subwindow");
 
+    scrollok(mainwindow, 1);
+
     char *titlemsg = "ncfil - Ncurses File Manager - version 0.1";
     mvwaddstr(titlebar, 0, (maxx - strlen(titlemsg)) / 2, titlemsg);
     wrefresh(titlebar);
@@ -36,35 +39,23 @@ int main(void)
     box(container,0,0);
     wrefresh(container);
 
-    const size_t N = 100;
-    const size_t M = 100;
-    char files[N][M];
+    char file[95];
+    char dir[1000] = "./";
+    loop(mainwindow, file, dir);
 
-    int counter = get_files_in_directory(N, M, files, ".");
-    int menuitem = 0;
-    drawmenu(mainwindow, menuitem, N, M, files, counter);
-    wrefresh(mainwindow);
-
-    int key;
-
-    do {
-        key = getch();
-        switch(key) {
-        case 'j':
-            menuitem++;
-            if (menuitem > counter-1) menuitem = counter-1;
-            break;
-        case 'k':
-            menuitem--;
-            if (menuitem < 0) menuitem = 0;
-            break;
-        default:
+    while (1) {
+        int i;
+        for (i = 1; file[i] != '\0'; i++);
+        if (file[i-1] == '/') {
+            strcat(dir, file);
+            loop(mainwindow, file, dir);
+        } else {
             break;
         }
-        drawmenu(mainwindow, menuitem, N, M, files, counter);
-    } while (key != 'q');
+    }
 
     endwin();
+    printf("%s%s", dir, file);
     return 0;
 }
 
@@ -106,3 +97,39 @@ void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int c
     }
     wrefresh(win);
 }
+
+void loop(WINDOW *win, char file[], char dir[]) {
+    const size_t N = 100;
+    const size_t M = 100;
+    char files[N][M];
+
+    int counter = get_files_in_directory(N, M, files, dir);
+    int menuitem = 0;
+    drawmenu(win, menuitem, N, M, files, counter);
+    wrefresh(win);
+
+    int key;
+
+    do {
+        key = getch();
+        switch(key) {
+        case 'j':
+            menuitem++;
+            if (menuitem > counter-1) menuitem = counter-1;
+            break;
+        case 'k':
+            menuitem--;
+            if (menuitem < 0) menuitem = 0;
+            break;
+        case '\n':
+
+            break;
+        default:
+            break;
+        }
+        drawmenu(win, menuitem, N, M, files, counter);
+    } while (!(key == 'q' || key == '\n'));
+
+    strcpy(file, files[menuitem]);
+}
+
