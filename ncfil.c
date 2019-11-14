@@ -39,7 +39,7 @@ int main(void)
     box(container,0,0);
     wrefresh(container);
 
-    int rowoffset = 0;
+    int rowoffset;
 
     char file[95];
     char dir[1000] = "./";
@@ -111,6 +111,8 @@ void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
     const size_t M = 100;
     char files[N][M];
 
+    *rowoffset = 0;
+
     int maxx, maxy;
     getmaxyx(win, maxy, maxx);
 
@@ -138,6 +140,18 @@ void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
                 menuitem = 0;   
                 if (*rowoffset > 0)
                     (*rowoffset)--;
+            }
+            break;
+        case 't':
+            menuitem = 0;
+            *rowoffset = 0;
+            break;
+        case 'b':
+            if (maxy < (counter - 1)) {
+                menuitem = maxy-2;
+                *rowoffset = counter - maxy + 1;
+            } else {
+                menuitem = counter - 1;
             }
             break;
         default:
