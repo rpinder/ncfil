@@ -1,5 +1,5 @@
 # ncfil
-A basic file finder using Ncurses
+A basic file browser using Ncurses
 ![Screenshot](screenshot.png)
 ## Usage
 Running 'ncfil' will output the relative filepath to the chosen file through stdout. The idea is for it to be used in conjunction with another command.
