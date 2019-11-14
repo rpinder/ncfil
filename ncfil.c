@@ -12,7 +12,7 @@ int main(void)
 {
     WINDOW *mainwindow, *titlebar, *container;
 
-    initscr();
+    newterm(NULL, stderr, stdin);
     refresh();
     noecho();
     curs_set(0);
