@@ -1,2 +1,2 @@
 # ncfil
-A basic file manager using Ncurses
+A basic file finder using Ncurses
