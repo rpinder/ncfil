@@ -10,8 +10,9 @@ vim `ncfil`
 ```
 This will open ncfil and then open the chosen file in vim.
 ## Keybindings
-- J- Move down
+- J - Move down
 - K - Move up
+- U - Move up a directory
 - T - Move to top of list
 - B - Move to bottom of list
 - Q - Quit
