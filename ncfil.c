@@ -6,11 +6,12 @@
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
 void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
-void loop(WINDOW *win, char file[], char dir[], int *rowoffset);
+void loop(WINDOW *win, WINDOW* hwin, char file[], char dir[], int *rowoffset);
+void drawHelp(WINDOW *win);
 
 int main(void)
 {
-    WINDOW *mainwindow, *titlebar, *container;
+    WINDOW *mainwindow, *titlebar, *container, *helpwindow;
 
     newterm(NULL, stderr, stdin);
     refresh();
@@ -28,7 +29,9 @@ int main(void)
     if ( (titlebar = newwin(1, maxx,0,0)) == NULL )
         bomb("Unable to allocate memory for titlebar window");
     if ( (mainwindow = subwin(container,maxy-3,maxx-2,2,1)) == NULL )
-        bomb("Unable to allocate memory for subwindow");
+        bomb("Unable to allocate memory for mainwindow");
+    if ( (helpwindow = newwin(maxy-9,maxx-20,4,10)) == NULL )
+        bomb("Unable to allocate memory for helpwindow");
 
     scrollok(mainwindow, 1);
 
@@ -43,14 +46,14 @@ int main(void)
 
     char file[95];
     char dir[1000] = "./";
-    loop(mainwindow, file, dir, &rowoffset);
+    loop(mainwindow, helpwindow, file, dir, &rowoffset);
 
     while (1) {
         int i;
         for (i = 1; file[i] != '\0'; i++);
         if (file[i-1] == '/') {
             strcat(dir, file);
-            loop(mainwindow, file, dir, &rowoffset);
+            loop(mainwindow, helpwindow, file, dir, &rowoffset);
         } else {
             break;
         }
@@ -90,7 +93,6 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
 
 void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
 {
-    // temporary until scrolling is implemented
     int maxx, maxy;
     getmaxyx(win,maxy,maxx);
 
@@ -105,7 +107,7 @@ void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int c
     wrefresh(win);
 }
 
-void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
+void loop(WINDOW *win, WINDOW *hwin, char file[], char dir[], int *rowoffset )
 {
     const size_t N = 1000;
     const size_t M = 100;
@@ -154,6 +156,9 @@ void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
                 menuitem = counter - 1;
             }
             break;
+        case 'h':
+            drawHelp(hwin);
+            break;
         default:
             break;
         }
@@ -169,3 +174,21 @@ void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
     }
 }
 
+void drawHelp(WINDOW *win)
+{
+    box(win,0,0);
+    touchwin(win);
+    mvwaddstr(win,0,3,"HELP-MENU");
+
+    wrefresh(win);
+
+    int key;
+    do {
+        key = getch();
+        
+    } while (!(key == 'q' || key == 'h'));
+    if (key == 'q') {
+        endwin();
+        exit(0);
+    }
+}
