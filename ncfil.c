@@ -145,6 +145,10 @@ void loop(WINDOW *win, char file[], char dir[], int *rowoffset )
         }
         drawmenu(win, menuitem, N, M, files, counter, *rowoffset);
     } while (!(key == 'q' || key == '\n'));
+    if (key == 'q') {
+        endwin();
+        exit(0);
+    }
 
     strcpy(file, files[menuitem + *rowoffset]);
 }
