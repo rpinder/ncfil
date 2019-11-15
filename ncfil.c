@@ -17,9 +17,6 @@ int main(void)
     refresh();
     noecho();
     curs_set(0);
-    start_color();
-
-    init_pair(1, COLOR_RED, COLOR_BLACK);
 
     int maxx,maxy;
     getmaxyx(stdscr,maxy,maxx);
