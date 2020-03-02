@@ -6,9 +6,14 @@ Running 'ncfil' will output the relative filepath to the chosen file through std
 <br />
 
 ```
-vim `ncfil`
+vim $(ncfil)
 ```
 This will open ncfil and then open the chosen file in vim.
+```
+cat $(ncfil)
+```
+This will open ncfil and then print the chosen file to stdout.
+
 ## Keybindings
 - J - Move down
 - K - Move up
