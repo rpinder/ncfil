@@ -15,7 +15,7 @@ void stop_ncurses();
 void resize();
 
 
-WINDOW *mainwindow, *titlebar, *container, *helpwindow;
+WINDOW *mainwindow, *container, *helpwindow;
 
 int main(void)
 {
@@ -51,7 +51,6 @@ void resize() {
     refresh();
     createWindows();
     wrefresh(container);
-    wrefresh(titlebar);
     wrefresh(mainwindow);
     wrefresh(helpwindow);
 }
@@ -60,10 +59,8 @@ void createWindows() {
     int maxx, maxy;
     getmaxyx(stdscr, maxy, maxx);
 
-    if ((container = newwin(maxy - 1, maxx, 1, 0)) == NULL)
+    if ((container = newwin(maxy, maxx, 0, 0)) == NULL)
         bomb("unable to allocate memory for container window");
-    if ((titlebar = newwin(1, maxx, 0, 0)) == NULL)
-        bomb("Unable to allocate memory for titlebar window");
     if ((mainwindow = subwin(container, maxy - 3, maxx - 2, 2, 1)) == NULL)
         bomb("Unable to allocate memory for mainwindow");
     if ((helpwindow = newwin(maxy - 9, maxx - 20, 4, 10)) == NULL)
@@ -71,11 +68,9 @@ void createWindows() {
 
     scrollok(mainwindow, 1);
 
-    char *titlemsg = "ncfil - Ncurses File Browser";
-    mvwaddstr(titlebar, 0, (maxx - strlen(titlemsg)) / 2, titlemsg);
-    wrefresh(titlebar);
-
     box(container, 0, 0);
+    char *titlemsg = "ncfil-Ncurses-File-Browser";
+    mvwaddstr(container, 0, (maxx - strlen(titlemsg)) / 2, titlemsg);
     wrefresh(container);
 }
 
