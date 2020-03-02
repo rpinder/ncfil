@@ -99,7 +99,7 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
         for (int i = 0;((dir = readdir(d)) != NULL) && i < N; i++) {
             strncpy(name, dir->d_name, sizeof(name));
             if (dir->d_type == 4)
-                strcat(name, "/"); 
+                strcat(name, "/");
             strncpy(files[i], name, sizeof(files[0]));
             counter++;
         }
@@ -160,7 +160,7 @@ void loop(WINDOW *win, WINDOW *hwin, WINDOW *titlebar, WINDOW *container, char f
         case 'k':
             menuitem--;
             if (menuitem < 0) {
-                menuitem = 0;   
+                menuitem = 0;
                 if (*rowoffset > 0)
                     (*rowoffset)--;
             }
@@ -216,7 +216,6 @@ void drawHelp(WINDOW *win)
     int key;
     do {
         key = getch();
-        
     } while (!(key == 'q' || key == 'h'));
     if (key == 'q') {
         endwin();
