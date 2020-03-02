@@ -6,20 +6,45 @@
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
 void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
-void loop(WINDOW *win, WINDOW* hwin, char file[], char dir[], int *rowoffset);
+void loop(WINDOW *win, WINDOW* hwin, WINDOW* container, WINDOW* titlebar, char file[], char dir[], int *rowoffset);
 void drawHelp(WINDOW *win);
+void createWindows(WINDOW *mainwindow, WINDOW *titlebar, WINDOW *container, WINDOW *helpwindow);
+void start_ncurses(WINDOW *mainwindow);
+void stop_ncurses();
 
 int main(void)
 {
-    WINDOW *mainwindow, *titlebar, *container, *helpwindow;
+    WINDOW *mainwindow = NULL, *titlebar = NULL, *container = NULL, *helpwindow = NULL;
+    start_ncurses(mainwindow);
 
-    newterm(NULL, stderr, stdin);
-    refresh();
-    noecho();
-    curs_set(0);
+    createWindows(mainwindow, titlebar, container, helpwindow);
 
-    int maxx,maxy;
-    getmaxyx(stdscr,maxy,maxx);
+    int rowoffset;
+
+    char file[95];
+    char dir[1000] = "./";
+    loop(mainwindow, helpwindow, container, titlebar, file, dir, &rowoffset);
+
+    while (1) {
+        int i;
+        for (i = 1; file[i] != '\0'; i++);
+        if (file[i-1] == '/') {
+            strcat(dir, file);
+            loop(mainwindow, helpwindow, container, titlebar, file, dir, &rowoffset);
+        } else {
+            break;
+        }
+    }
+
+    stop_ncurses();
+    printf("%s%s", dir, file);
+    return 0;
+}
+
+void createWindows(WINDOW *mainwindow, WINDOW *titlebar, WINDOW *container, WINDOW *helpwindow)
+{
+    int maxx, maxy;
+    getmaxyx(stdscr, maxy, maxx);
 
     if ( (container = newwin(maxy-1,maxx,1,0)) == NULL )
         bomb("unable to allocate memory for container window");
@@ -39,26 +64,21 @@ int main(void)
     box(container,0,0);
     wrefresh(container);
 
-    int rowoffset;
+}
 
-    char file[95];
-    char dir[1000] = "./";
-    loop(mainwindow, helpwindow, file, dir, &rowoffset);
+void start_ncurses(WINDOW *mainwindow) {
+    newterm(NULL, stderr, stdin);
+    refresh();
+    noecho();
+    curs_set(0);
+}
 
-    while (1) {
-        int i;
-        for (i = 1; file[i] != '\0'; i++);
-        if (file[i-1] == '/') {
-            strcat(dir, file);
-            loop(mainwindow, helpwindow, file, dir, &rowoffset);
-        } else {
-            break;
-        }
-    }
-
+void stop_ncurses() {
     endwin();
-    printf("%s%s", dir, file);
-    return 0;
+}
+
+void end_ncurses() {
+    endwin();
 }
 
 void bomb(char *msg)
@@ -92,19 +112,23 @@ void drawmenu(WINDOW *win, int item, size_t N, size_t M, char files[N][M], int c
 {
     int maxx, maxy;
     getmaxyx(win,maxy,maxx);
+    char buffer[50];
+    sprintf(buffer, "%d %d\n", maxy, maxx);
+    if (mvwaddstr(win,1,2,"hello") == ERR)
+        bomb(buffer);
 
-    wclear(win);
-    for (int i = 0; (i < counter && i < maxy); i++) {
-        if (i == item)
-            wattron(win, A_REVERSE);
-        if (i + rowoffset < N)
-            mvwaddstr(win,1+i,2,files[i + rowoffset]);
-        wattroff(win, A_REVERSE);
-    }
+    /* wclear(win); */
+    /* for (int i = 0; (i < counter && i < maxy); i++) { */
+    /*     if (i == item) */
+    /*         wattron(win, A_REVERSE); */
+    /*     if (i + rowoffset < N) */
+    /*         mvwaddstr(win,1+i,2,files[i + rowoffset]); */
+    /*     wattroff(win, A_REVERSE); */
+    /* } */
     wrefresh(win);
 }
 
-void loop(WINDOW *win, WINDOW *hwin, char file[], char dir[], int *rowoffset )
+void loop(WINDOW *win, WINDOW *hwin, WINDOW *titlebar, WINDOW *container, char file[], char dir[], int *rowoffset )
 {
     const size_t N = 1000;
     const size_t M = 100;
@@ -155,6 +179,16 @@ void loop(WINDOW *win, WINDOW *hwin, char file[], char dir[], int *rowoffset )
             break;
         case 'h':
             drawHelp(hwin);
+            break;
+        case KEY_RESIZE:
+            stop_ncurses();
+            start_ncurses(win);
+            refresh();
+            createWindows(win, titlebar, container, hwin);
+            wrefresh(titlebar);
+            wrefresh(hwin);
+            wrefresh(win);
+            wrefresh(container);
             break;
         default:
             break;
