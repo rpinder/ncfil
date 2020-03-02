@@ -5,6 +5,7 @@
 
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
+void sortFiles(size_t N, size_t M, char files[N][M], int counter);
 void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
 void loop(char file[], char dir[], int *rowoffset);
 void drawHelp();
@@ -134,6 +135,7 @@ void loop(char file[], char dir[], int *rowoffset )
     int maxy = getmaxy(mainwindow);
 
     int counter = get_files_in_directory(N, M, files, dir);
+    sortFiles(N, M, files, counter);
     int menuitem = 0;
     drawmenu(menuitem, N, M, files, counter, *rowoffset);
     wrefresh(mainwindow);
@@ -215,4 +217,24 @@ void drawHelp()
         endwin();
         exit(0);
     }
+}
+
+void sortFiles(size_t N, size_t M, char files[N][M], int counter)
+{
+    int holePosition;
+    char valueToInsert[M];
+
+    for (int i = 1; i < counter; i++) {
+        strcpy(valueToInsert, files[i]);
+        holePosition = i;
+
+        while (holePosition > 0 && strcmp(files[holePosition - 1], valueToInsert) > 0) {
+            strcpy(files[holePosition], files[holePosition - 1]);
+            holePosition--;
+        }
+
+        if (holePosition != i) {
+            strcpy(files[holePosition], valueToInsert);
+        }
+    }   
 }
