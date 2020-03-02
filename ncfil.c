@@ -111,8 +111,7 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
 
 void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
 {
-    int maxx, maxy;
-    getmaxyx(mainwindow,maxy,maxx);
+    int maxy = getmaxy(mainwindow);
     wclear(mainwindow);
     for (int i = 0; (i < counter && i < maxy); i++) {
         if (i == item)
@@ -132,8 +131,7 @@ void loop(char file[], char dir[], int *rowoffset )
 
     *rowoffset = 0;
 
-    int maxx, maxy;
-    getmaxyx(mainwindow, maxy, maxx);
+    int maxy = getmaxy(mainwindow);
 
     int counter = get_files_in_directory(N, M, files, dir);
     int menuitem = 0;
