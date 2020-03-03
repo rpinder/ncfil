@@ -8,15 +8,16 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
 void sortFiles(size_t N, size_t M, char files[N][M], int counter);
 void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
 void loop(char file[], char dir[], int *rowoffset);
-void drawHelp(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
+void help_window(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
 void createWindows();
 void start_ncurses();
 void stop_ncurses();
 void resize();
-
+void drawhelp(int offset, char helpfile[200][200], int line_count);
+void readhelp(char helpfile[200][200], int *line_number);
 
 WINDOW *mainwindow, *container, *helpwindow;
-
+    
 int main(void)
 {
     start_ncurses();
@@ -61,7 +62,7 @@ void createWindows() {
 
     if ((container = newwin(maxy, maxx, 0, 0)) == NULL)
         bomb("unable to allocate memory for container window");
-    if ((mainwindow = subwin(container, maxy - 3, maxx - 2, 2, 1)) == NULL)
+    if ((mainwindow = subwin(container, maxy - 3, maxx - 2, 1, 1)) == NULL)
         bomb("Unable to allocate memory for mainwindow");
     if ((helpwindow = newwin(maxy - 9, maxx - 20, 4, 10)) == NULL)
         bomb("Unable to allocate memory for helpwindow");
@@ -180,7 +181,7 @@ void loop(char file[], char dir[], int *rowoffset )
             }
             break;
         case 'h':
-            drawHelp(menuitem, N, M, files, counter, *rowoffset);
+            help_window(menuitem, N, M, files, counter, *rowoffset);
             break;
         case KEY_RESIZE:
             resize();
@@ -200,30 +201,59 @@ void loop(char file[], char dir[], int *rowoffset )
     }
 }
 
-void drawHelp(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
+void help_window(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
 {
-    box(helpwindow,0,0);
-    touchwin(helpwindow);
-    mvwaddstr(helpwindow,0,3,"HELP-MENU");
-
-    wrefresh(helpwindow);
-
+    int offset = 0;
+    int maxy = getmaxy(helpwindow);
+    char helpfile[200][200];
+    int line_count;
+    readhelp(helpfile, &line_count);
+    drawhelp(offset, helpfile, line_count);
     int key;
     do {
         key = getch();
-        if (key == KEY_RESIZE) {
+        switch (key) {
+         case 'j':
+             if (offset + maxy - 2 < line_count)
+                 offset++;
+            break;
+        case 'k':
+            offset--;
+            if (offset < 0) {
+                offset = 0;
+            }
+            break;
+        case KEY_RESIZE:
             resize();
             drawmenu(item, N, M, files, counter, rowoffset);
             box(helpwindow,0,0);
             touchwin(helpwindow);
             mvwaddstr(helpwindow,0,3,"HELP-MENU");
-            wrefresh(helpwindow);
+            break;
+        default:
+            break;
         }
+        drawhelp(offset, helpfile, line_count);
     } while (!(key == 'q' || key == 'h'));
     if (key == 'q') {
         endwin();
         exit(0);
     }
+}
+
+void drawhelp(int offset, char helpfile[200][200], int line_count)
+{
+    wclear(helpwindow);
+    touchwin(helpwindow);
+    mvwaddstr(helpwindow,0,3,"HELP-MENU");
+    wrefresh(helpwindow);
+    int maxx = getmaxx(helpwindow);
+    int maxy = getmaxy(helpwindow); 
+    for (int i = 0; i < maxy - 2 && i < line_count; i++) {
+        mvwaddstr(helpwindow, i+1, 1, helpfile[i+offset]); 
+    }
+    box(helpwindow,0,0);
+    wrefresh(helpwindow);
 }
 
 void sortFiles(size_t N, size_t M, char files[N][M], int counter)
@@ -244,4 +274,18 @@ void sortFiles(size_t N, size_t M, char files[N][M], int counter)
             strcpy(files[holePosition], valueToInsert);
         }
     }   
+}
+
+void readhelp(char helpfile[200][200], int *line_number)
+{
+    FILE *in = fopen("help.txt", "r");
+    char line[200];
+    int i;
+    fgets(line, 200,in);
+    for (i = 0; !feof(in); i++) {
+        strncpy(helpfile[i], line, 200);
+        fgets(line, 200, in);
+    }
+    *line_number = i;
+    fclose(in);
 }
