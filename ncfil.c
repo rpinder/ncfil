@@ -13,10 +13,12 @@ void createWindows();
 void start_ncurses();
 void stop_ncurses();
 void resize();
-void drawhelp(int offset, char helpfile[200][200], int line_count);
-void readhelp(char helpfile[200][200], int *line_number);
+void drawhelp(int offset, char *helpfile, int line_count);
+void lineWrap(char *file, char **newfile, int width, int *line_count);
 
 WINDOW *mainwindow, *container, *helpwindow;
+
+char *help = "A basic file browser using Ncurses\n.\nRunning 'ncfil' will output the relative filepath to the chosen file through stdout. The idea is for it to be used in conjunction with another command.\n.\nvim $(ncfil) - This will open ncfil and then open the chosen file in vim.\ncat $(ncfil) - This will open ncfil and then print the chosen file to stdout.\n.\nKeybindings\nJ - Move down\nK - Move up\nU - Move up a directory\nT - Move to top of list\nB - Move to bottom of list\nQ - Quit\nENTER - Select file/Go into directory\n";
     
 int main(void)
 {
@@ -75,14 +77,16 @@ void createWindows() {
     wrefresh(container);
 }
 
-void start_ncurses() {
+void start_ncurses()
+{
     newterm(NULL, stderr, stdin);
     refresh();
     noecho();
     curs_set(0);
 }
 
-void stop_ncurses() {
+void stop_ncurses()
+{
     endwin();
 }
 
@@ -205,16 +209,17 @@ void help_window(int item, size_t N, size_t M, char files[N][M], int counter, in
 {
     int offset = 0;
     int maxy = getmaxy(helpwindow);
-    char helpfile[200][200];
+    int maxx = getmaxx(helpwindow);
     int line_count;
-    readhelp(helpfile, &line_count);
+    char *helpfile;
+    lineWrap(help, &helpfile, maxx-2, &line_count);
     drawhelp(offset, helpfile, line_count);
     int key;
     do {
         key = getch();
         switch (key) {
          case 'j':
-             if (offset + maxy - 2 < line_count)
+             if (offset + maxy - 3 < line_count)
                  offset++;
             break;
         case 'k':
@@ -225,6 +230,8 @@ void help_window(int item, size_t N, size_t M, char files[N][M], int counter, in
             break;
         case KEY_RESIZE:
             resize();
+            int maxx = getmaxx(helpwindow);
+            lineWrap(help, &helpfile, maxx-2, &line_count);
             drawmenu(item, N, M, files, counter, rowoffset);
             box(helpwindow,0,0);
             touchwin(helpwindow);
@@ -241,18 +248,27 @@ void help_window(int item, size_t N, size_t M, char files[N][M], int counter, in
     }
 }
 
-void drawhelp(int offset, char helpfile[200][200], int line_count)
+void drawhelp(int offset, char *helpfile, int line_count)
 {
     wclear(helpwindow);
     touchwin(helpwindow);
+    box(helpwindow,0,0);
     mvwaddstr(helpwindow,0,3,"HELP-MENU");
     wrefresh(helpwindow);
     int maxx = getmaxx(helpwindow);
     int maxy = getmaxy(helpwindow); 
-    for (int i = 0; i < maxy - 2 && i < line_count; i++) {
-        mvwaddstr(helpwindow, i+1, 1, helpfile[i+offset]); 
+    lineWrap(help, &helpfile, maxx-4, &line_count);
+
+    char *token;
+    token = strtok(helpfile, "\n");
+    for (int i = 0; i < offset; i++) {
+        token = strtok(NULL, "\n");
     }
-    box(helpwindow,0,0);
+    for (int i = 1; i < maxy - 2 && token != NULL; i++) {
+        mvwaddstr(helpwindow, i, 1, token);
+        token = strtok(NULL, "\n");
+    }
+
     wrefresh(helpwindow);
 }
 
@@ -276,16 +292,24 @@ void sortFiles(size_t N, size_t M, char files[N][M], int counter)
     }   
 }
 
-void readhelp(char helpfile[200][200], int *line_number)
+void lineWrap(char *file, char **newfile, int width, int *line_count)
 {
-    FILE *in = fopen("help.txt", "r");
-    char line[200];
-    int i;
-    fgets(line, 200,in);
-    for (i = 0; !feof(in); i++) {
-        strncpy(helpfile[i], line, 200);
-        fgets(line, 200, in);
+    *line_count = 0;
+    *newfile = malloc(strlen(file)*sizeof(char));
+    int col = 0;
+    for (int i = 0; file[i] != '\0'; i++, col++) {
+        (*newfile)[i] = file[i];
+        if (file[i] == '\n') {
+            col = 0;
+            (*line_count)++;
+        }
+        if (col > width) {
+            int j;
+            for (j = i; file[j] != ' '; j--);
+            (*newfile)[j] = '\n';
+            (*line_count)++;
+            col = 0;
+        }
     }
-    *line_number = i;
-    fclose(in);
+    (*newfile)[strlen(file)] = '\0';
 }
