@@ -124,6 +124,7 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
 void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
 {
     int maxy = getmaxy(mainwindow);
+    wclear(mainwindow);
     for (int i = 0; (i < counter && i < maxy); i++) {
         if (i == item)
             wattron(mainwindow, A_REVERSE);
@@ -147,7 +148,6 @@ void loop(char file[], char dir[], int *rowoffset )
     int counter = get_files_in_directory(N, M, files, dir);
     sortFiles(N, M, files, counter);
     int menuitem = 0;
-    wclear(mainwindow);
     drawmenu(menuitem, N, M, files, counter, *rowoffset);
     wrefresh(mainwindow);
 
