@@ -6,9 +6,9 @@
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
 void sortFiles(size_t N, size_t M, char files[N][M], int counter);
-void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
+void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset, char dir[]);
 void loop(char file[], char dir[], int *rowoffset);
-void help_window(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset);
+void help_window(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset, char dir[]);
 void createWindows();
 void start_ncurses();
 void stop_ncurses();
@@ -121,7 +121,7 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
     return counter;
 }
 
-void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
+void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset, char dir[])
 {
     int maxy = getmaxy(mainwindow);
     wclear(mainwindow);
@@ -132,7 +132,9 @@ void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int r
             mvwaddstr(mainwindow,1+i,2,files[i + rowoffset]);
         wattroff(mainwindow, A_REVERSE);
     }
+    mvwaddstr(container, maxy+1, 2, dir);
     wrefresh(mainwindow);
+    wrefresh(container);
 }
 
 void loop(char file[], char dir[], int *rowoffset )
@@ -148,7 +150,7 @@ void loop(char file[], char dir[], int *rowoffset )
     int counter = get_files_in_directory(N, M, files, dir);
     sortFiles(N, M, files, counter);
     int menuitem = 0;
-    drawmenu(menuitem, N, M, files, counter, *rowoffset);
+    drawmenu(menuitem, N, M, files, counter, *rowoffset, dir);
     wrefresh(mainwindow);
 
     int key;
@@ -185,7 +187,7 @@ void loop(char file[], char dir[], int *rowoffset )
             }
             break;
         case 'h':
-            help_window(menuitem, N, M, files, counter, *rowoffset);
+            help_window(menuitem, N, M, files, counter, *rowoffset, dir);
             break;
         case KEY_RESIZE:
             resize();
@@ -193,7 +195,7 @@ void loop(char file[], char dir[], int *rowoffset )
         default:
             break;
         }
-        drawmenu(menuitem, N, M, files, counter, *rowoffset);
+        drawmenu(menuitem, N, M, files, counter, *rowoffset, dir);
     } while (!(key == 'q' || key == '\n' || key == 'u'));
     if (key == 'q') {
         endwin();
@@ -205,7 +207,7 @@ void loop(char file[], char dir[], int *rowoffset )
     }
 }
 
-void help_window(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset)
+void help_window(int item, size_t N, size_t M, char files[N][M], int counter, int rowoffset, char dir[])
 {
     int offset = 0;
     int maxy = getmaxy(helpwindow);
@@ -232,7 +234,7 @@ void help_window(int item, size_t N, size_t M, char files[N][M], int counter, in
             resize();
             int maxx = getmaxx(helpwindow);
             lineWrap(help, &helpfile, maxx-2, &line_count);
-            drawmenu(item, N, M, files, counter, rowoffset);
+            drawmenu(item, N, M, files, counter, rowoffset, dir);
             box(helpwindow,0,0);
             touchwin(helpwindow);
             mvwaddstr(helpwindow,0,3,"HELP-MENU");
