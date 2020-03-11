@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 
 void bomb(char *msg);
 int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory);
@@ -29,14 +30,22 @@ int main(void)
     int rowoffset;
 
     char file[95];
-    char dir[1000] = "./";
+    char dir[1000];
+    getcwd(dir, sizeof(dir));
+    strcat(dir, "/");
     loop(file, dir, &rowoffset);
 
     while (1) {
         int i;
         for (i = 1; file[i] != '\0'; i++);
         if (file[i-1] == '/') {
-            strcat(dir, file);
+            if (strcmp(file, "../") == 0) {
+                int j;
+                for (j = strlen(dir)-2; dir[j] != '/'; j--);
+                dir[j+1] = '\0';
+            } else {
+                strcat(dir, file);
+            }
             loop(file, dir, &rowoffset);
         } else {
             break;
@@ -106,15 +115,20 @@ int get_files_in_directory(size_t N, size_t M, char files[N][M], char *directory
     int counter = 0;
     DIR *d;
     char name[95];
+    int offset = 0;
     struct dirent *dir;
     d = opendir(directory);
     if (d) {
         for (int i = 0;((dir = readdir(d)) != NULL) && i < N; i++) {
             strncpy(name, dir->d_name, sizeof(name));
-            if (dir->d_type == 4)
-                strcat(name, "/");
-            strncpy(files[i], name, sizeof(files[0]));
-            counter++;
+            if (strcmp(name, ".")) {
+                if (dir->d_type == 4)
+                    strcat(name, "/");
+                strncpy(files[i + offset], name, sizeof(files[0]));
+                counter++;
+            } else {
+                offset--; 
+            }
         }
         closedir(d);
     }
@@ -132,6 +146,13 @@ void drawmenu(int item, size_t N, size_t M, char files[N][M], int counter, int r
             mvwaddstr(mainwindow,1+i,2,files[i + rowoffset]);
         wattroff(mainwindow, A_REVERSE);
     }
+    char buffer[getmaxx(mainwindow)-1];
+    int i;
+    for (i = 0; i < (sizeof(buffer)/sizeof(buffer[0])); i++) {
+        buffer[i] = ' ';
+    }
+    buffer[i] = '\0';
+    mvwaddstr(container, maxy+1, 2, buffer);
     mvwaddstr(container, maxy+1, 2, dir);
     wrefresh(mainwindow);
     wrefresh(container);
