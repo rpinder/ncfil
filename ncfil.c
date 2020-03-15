@@ -92,6 +92,7 @@ void start_ncurses()
     refresh();
     noecho();
     curs_set(0);
+    cbreak();
 }
 
 void stop_ncurses()
@@ -273,11 +274,6 @@ void help_window(int item, size_t N, size_t M, char files[N][M], int counter, in
 
 void drawhelp(int offset, char *helpfile, int line_count)
 {
-    wclear(helpwindow);
-    touchwin(helpwindow);
-    box(helpwindow,0,0);
-    mvwaddstr(helpwindow,0,3,"HELP-MENU");
-    wrefresh(helpwindow);
     int maxx = getmaxx(helpwindow);
     int maxy = getmaxy(helpwindow); 
     lineWrap(help, &helpfile, maxx-4, &line_count);
@@ -287,6 +283,10 @@ void drawhelp(int offset, char *helpfile, int line_count)
     for (int i = 0; i < offset; i++) {
         token = strtok(NULL, "\n");
     }
+    wclear(helpwindow);
+    box(helpwindow,0,0);
+    mvwaddstr(helpwindow,0,3,"HELP-MENU");
+
     for (int i = 1; i < maxy - 2 && token != NULL; i++) {
         mvwaddstr(helpwindow, i, 1, token);
         token = strtok(NULL, "\n");
